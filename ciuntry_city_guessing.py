@@ -1,54 +1,19 @@
 # Country Cities Guessing Game Python Project Create a program that will ask a user to guess 
-# the capital of a country. The program should have a list of at least 10 countries and their 
-# capitals. The program should randomly choose a country and ask the user to guess the capital. 
+# the capital of a country. The program should have a list of at least 10 countries and their # capitals. The program should randomly choose a country and ask the user to guess the capital. J
 # The program should tell the user if they are correct or not. The program should also keep track
 #  of how many questions the user gets correct and print that out at the end. Use this link to programatically get 
 #  the list of countries and their capitals: https://raw.githubusercontent.com/samayo/country-json/
 #  master/src/country-by-capital-city.json
 
 import random
+import requests
 import time
 
 print('\n\nCOUNTRY CITIES GUESSING GAME!\n\n')
-time.sleep(2)
-country_dlist = [    {
-        "country": "Zambia",
-        "city": "Lusaka"
-    },
-    {
-        "country": "Zimbabwe",
-        "city": "Harare"
-    },    {
-        "country": "Virgin Islands, British",
-        "city": "Road Town"
-    },
-    {
-        "country": "Virgin Islands, U.S.",
-        "city": "Charlotte Amalie"
-    },
-    {
-        "country": "Wales",
-        "city": "Cardiff"
-    },    {
-        "country": "United Arab Emirates",
-        "city": "Abu Dhabi"
-    },
-    {
-        "country": "United Kingdom",
-        "city": "London"
-    },
-    {
-        "country": "United States",
-        "city": "Washington"
-    },    {
-        "country": "Uganda",
-        "city": "Kampala"
-    },
-    {
-        "country": "Ukraine",
-        "city": "Kyiv"
-    }
-    ]
+# time.sleep(2)
+
+response = requests.get("https://raw.githubusercontent.com/samayo/country-json/master/src/country-by-capital-city.json")
+country_dlist = response.json()
 
 def run():
     tot_points = 0
