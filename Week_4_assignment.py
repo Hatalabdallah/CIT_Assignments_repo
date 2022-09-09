@@ -2,7 +2,15 @@
 
 array=[[23,45,43,23,45],[45,67,54,32,45],[89,90,87,65,44],[23,45,67,32,10]]
 
-print(array[0][1])
+del(array[1][1])
+ 
+print("New Array")
+
+for _ in array:
+    for x in _:
+        print(x,end=" ")
+    print()
+
 
 # 2. Write a python program to sort array element in the ascending/descending order
 
