@@ -11,96 +11,96 @@ import numpy as np
 import requests
 from bs4 import BeautifulSoup
 from time import sleep
-from random import randint
 from openpyxl.workbook import Workbook
 
 # Declaring the headers 
 headers = {"Accept-Language": "en-US,en;q=0.5"}
 
 #declaring the list of empty variables, So that we can append the data overall
-
-movie_name = []
-year = []
-time=[]
-rating=[]
-metascore =[]
-votes = []
-gross = []
-description = []
+Title = []
+Year = []
+Runtime = []
+Rating = []
+Metascore = []
+Votes = []
+Gross = []
+Description = []
 Director = []
-actors = []
+Actors = []
 Genre = []
 
+page = requests.get('https://www.imdb.com/chart/top/')
+soup = BeautifulSoup(page.text, 'html.parser')
 
-#creating an array of values and passing it in the url for dynamic webpages
-pages = np.arange(1,9400584,50)
+movie_data = soup.find('tbody', class_ = 'lister-list').find_all('tr')
 
-# https://www.imdb.com/search/title/?year=1980-01-01,2022-12-31
-#the whole core of the script
-for page in pages:
-    page = requests.get("https://www.imdb.com/search/title/?year=1980-01-01,2022-12-31&start="+str(page)+"&ref_=adv_nxt")
-    soup = BeautifulSoup(page.text, 'html.parser')
-    movie_data = soup.findAll('div', attrs = {'class': 'lister-item mode-advanced'})
-    sleep(randint(2,8))
-    for store in movie_data:
-        name = store.h3.a.text
-        movie_name.append(name)
-        
-        year_of_release = store.h3.find('span', class_ = "lister-item-year text-muted unbold").text
-        year.append(year_of_release)
-        
-        runtime = store.p.find("span", class_ = 'runtime').text
-        time.append(runtime)
-        
-        rate = store.find('div', class_ = "inline-block ratings-imdb-rating").text.replace('\n', '')
-        rating.append(rate)
-        
-        meta = store.find('span', class_ = "metascore").text if store.find('span', class_ = "metascore") else "****"
-        metascore.append(meta)
-        
-        
-        value = store.find_all('span', attrs = {'name': "nv"})
-        
-        vote = value[0].text
-        votes.append(vote)
-        
-        grosses = value[1].text if len(value)>1 else '%^%^%^'
-        gross.append(grosses)
 
-        # Description of the Movies -- Not explained in the Video, But you will figure it out. 
-        describe = store.find_all('p', class_ = 'text-muted')
-        description_ = describe[1].text.replace('\n', '') if len(describe) >1 else '*****'
-        description.append(description_)
-        
-        #Cast Details -- Scraping Director name and Stars -- Not explained in Video
-        cast = store.find("p", class_ = '')
-        cast = cast.text.replace('\n', '').split('|')
-        cast = [x.strip() for x in cast]
-        cast = [cast[i].replace(j, "") for i,j in enumerate(["Director:", "Stars:"])]
-        Director.append(cast[0])
-        actors.append([x.strip() for x in cast[1].split(",")])
-        
-        # Description of the Movies -- Not explained in the Video, But you will figure it out. 
-        describe = store.find_all('p', class_ = 'text-muted')
-        description_ = describe[1].text.replace('\n', '') if len(describe) >1 else '*****'
-        description.append(description_)
+for movie in movie_data:
+    name = movie.find('td', class_ = 'titleColumn').find('a').text
+    Title.append(name)
+    
+    year_of_release = movie.find('td', class_ = 'titleColumn').span.text.strip('()')
+    # for year_of_release in range(1980,2023):
+    Year.append(year_of_release)
 
-        genre = store.p.find("span", class_ = 'genre').text
+    rate = movie.find('td',class_ = "ratingColumn imdbRating").strong.text
+    Rating.append(rate)
+
+    url = 'https://www.imdb.com/' + movie.find('td', class_ = 'titleColumn').a.get('href')
+    page2 = requests.get(url)
+    soup2 = BeautifulSoup(page2.text, 'html.parser')
+
+    movie_details = soup2.find('div', class_ = "sc-2a827f80-10 fVYbpg")
+    
+    # runtime = movie_details.find()
+    # print(runtime)
+
+    meta = movie_details.find('span', class_ = "score-meta").text
+    Metascore.append(meta)
+
+    all_genre = movie_details.find('div', class_ = "ipc-chip-list__scroller").find_all('a')
+    
+    for item in all_genre:
+        genre = item.span.text
         Genre.append(genre)
+    
+    # Genre.append(genre)
 
-        
-#creating a dataframe 
-movie_list = pd.DataFrame({ "Movie Name": movie_name, "Year of Release" : year, "Watch Time": time,"Movie Rating": rating, "Meatscore of movie": metascore,
- "Votes" : votes, "Gross": gross, "Description": description, "Director": Director, "Actor": actors, 'Genre': genre  })
-# movie_list.head(5)
+    description = movie_details.find('span', class_ = "sc-16ede01-2 gXUyNh").text
+    Description.append(description)
 
-# # #saving the data in excel format
-# movie_list.to_excel("Top 1000 IMDb movies.xlsx")
+    director = movie_details.find('a', class_ = "ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link").text
+    Director.append(director)
 
-# #If you want to save the data in csv format
-movie_list.to_csv("Top 1000 IMDb movies.csv")
+    # director = movie_details.ul.li.div.text
+    
 
-print("done")
+    stars = movie_details.ul.li.find_next_sibling().find_next_sibling().div.ul.find_all('li')
+    for x in stars:
+        star = x.text
+        Actors.append(star)
+   
+#     value = store.find_all('span', attrs = {'name': "nv"})
+    
+#     vote = value[0].text
+#     votes.append(vote)
+    
+#     grosses = value[1].text if len(value)>1 else '%^%^%^'
+#     gross.append(grosses)
+
+         
+# creating a dataframe
+movie_list = pd.DataFrame({ "Movie Name": Title, "Year of Release" : Year,"Movie Rating": Rating, "Meatscore of movie": Metascore,
+"Description": Description, "Director": Director, "Actor": Actors, 'Genre': Genre})
+# # movie_list.head(5)
+
+# # # #saving the data in excel format
+# # movie_list.to_excel("Top 1000 IMDb movies.xlsx")
+
+#If you want to save the data in csv format
+movie_list.to_csv("Top Rated IMDb movies.csv")
+
+print("Done")
 
 
 
@@ -118,46 +118,48 @@ Comments = []
 Authors = []
 Ranks = []
 
-url = 'https://news.ycombinator.com/'
+headers = {"Accept-Language": "en-US,en;q=0.5"}
 
-for page in range(1,27):
-    r = requests.get(f'https://news.ycombinator.com/news?p={page}')
+for page in range(1, 27):
+    try:
+        source = requests.get(f"https://news.ycombinator.com/news?p={page}")
+        source.raise_for_status()
 
-    soup = BeautifulSoup(r.content, 'html.parser')
+        soup = BeautifulSoup(source.text, 'html.parser')
+        
+        movies = soup.find('table', class_ = 'itemlist').find_all('tr')
+    
 
-    data = soup.find_all('tr', class_ = "athing")
-    data2 = soup.find_all('td', class_ = 'subtext')
+        for movie in movies:
 
+            title = movie.find('span', class_ = "titleline").find('a').text
 
-    for item in data:
-        Title = item.find('span', class_ = "titleline").find('a').text
-        Titles.append(Title)
+            Link = movie.find('span', class_ = 'titleline').find('a', href=True)
 
-        Link = item.find('span', class_ = 'titleline').find('a', href=True)
-        Links.append(Link)
+            Rank = movie.find('span', class_ = 'rank').text.strip('.')
 
-        Rank = item.find('span', class_ = 'rank').text.strip('.')
-        Ranks.append(Rank)
+            # Point = movie.find('td', class_ = 'subtext')
+            # print(Point)
+        
+            # Comment = movie.find('a', href = True)
+            # print(Comment['href'])
+            # break
 
+            Author = movie.find('td', class_ = 'subtext')
+            print(Author)
+            break
+            # name = movie.find('td', class_ =  'titleColumn').a.text
+            
+            # rank = movie.find('td', class_ = 'titleColumn').get_text(strip = True).split('.')[0]
+            
+            # year = movie.find('td', class_ = 'titleColumn').span.text.strip('()')
+            
+            # rating = movie.find('td', class_ = 'ratingColumn imdbRating').strong.text
+            # print(rating)
         
 
-    for item in data2:
-        if item.find('span', class_ = 'score') is not None:
-            Point = item.find('span', class_ = 'score').text
-            Points.append(Point)
-
-        else:
-            pass
-
-        if item.find_all('a')[-1].text is not None:
-            Comment = item.find_all('a')[-1].text
-            Comments.append(Comment)
-
-        
-        if item.find('a', class_ = "hnuser") is not None:
-            Author = item.find('a', class_ = "hnuser").text
-            Authors.append(Author)
-
+    except Exception as e:
+        print(e)
 
 data = pd.DataFrame({ "Title": Titles, "Link" : Links, "Rank": Ranks})
 
